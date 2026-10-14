@@ -1,0 +1,130 @@
+First raw prompt for ChatGPT-6.1 Sol:
+'''
+Uploaded files\
+restaurants-db.txt - restaurant database \
+restaurants-schema.csv - schema of the database\
+restaurants_dataset.csv - given dataset of human-readable tasks to be converted into sql queries.\
+\
+analyze database, its structure and data, and then go through each task in the dataset and create a sql query for each
+task processed. prompt has to output one final file with all required queries listed.
+
+
+'''
+100% accuracy
+=======================================================================================================================
+
+
+
+
+new chat, changed raw prompt for ChatGPT:
+'''
+go through each task in the dataset and create an sql query for each task processed.
+Output one UTF-8 CSV file named `restaurants_dataset_predictions.csv` with the header `question,predicted_sql`.
+Include one row per input task, preserving the original question text, row order, and duplicates. Put one executable
+SQLite query in `predicted_sql`, using proper CSV quoting and escaping. Do not include the original `result` column,
+explanations, or Markdown.
+'''
+100% accuracy
+prompt added:
+'''
+I need worse solution. 50% accuracy
+'''
+50.32% accuracy
+
+
+=======================================================================================================================
+
+new chat with ChatGPT, STAR generated prompt:
+'''
+You are a data‑engineering specialist who translates natural‑language analysis requests into precise SQLite statements.
+Take each user‑provided task description from the input dataset and write a single, executable SQLite query that fulfills the request. Preserve the exact wording and order of the tasks, including any duplicate entries.
+Produce one UTF‑8 CSV file named **restaurants_dataset_predictions.csv** with exactly two columns:
+- **question**
+– the original task text
+
+- **predicted_sql**
+– the corresponding SQLite query, quoted and escaped so the CSV is valid
+
+Do not add explanations, result columns, or Markdown formatting.
+If the dataset’s schema is not fully described, assume a reasonable structure based on typical restaurant data and state those assumptions clearly before generating the queries.
+If any essential details (e.g., table name, column names, data types) are missing, ask up to three concise clarifying questions before proceeding.
+
+**Quality criteria**
+1. Each SQL statement must be syntactically correct for SQLite and runnable without modification.
+2. The CSV must conform to UTF‑8 encoding, include a header row, and correctly escape commas, quotes, and line breaks.
+3. Queries should be optimized for readability, using explicit column lists and appropriate clauses (WHERE, GROUP BY, ORDER BY, etc.) rather than SELECT *.
+
+Write this for me. Match the depth, vocabulary and examples to that reader.
+Unless a length is specified above, aim for roughly 600-900 words.
+'''
+99.35% accuracy
+
+
+=======================================================================================================================
+
+
+
+new chat with ChatGPT, CRISP generated prompt:
+'''
+You are an expert data‑engineer who specializes in translating natural‑language data‑analysis requests into precise SQLite queries.
+You have been given a CSV file containing a list of analytical tasks, each expressed as a question in a column named **question**. Your job is to produce a new UTF‑8 CSV file called **restaurants_dataset_predictions.csv**. This file must have exactly two columns with the header line:
+```
+question,predicted_sql
+```
+For every row in the input file, preserve the original **question** text, its order, and any duplicate entries. In the **predicted_sql** column place a single, executable SQLite SELECT statement that answers the corresponding question. Ensure the SQL string is correctly quoted and escaped for CSV format (e.g., wrap the query in double quotes and double any internal double‑quote characters). Do not include any additional columns, explanations, or Markdown formatting.
+Assume the relevant database schema is described as follows (replace with the actual schema if known):
+The database contains three tables: RESTAURANT stores ID (primary key), NAME, FOOD_TYPE, CITY_NAME, and RATING; LOCATION stores RESTAURANT_ID (primary key referencing RESTAURANT.ID), HOUSE_NUMBER, STREET_NAME, and CITY_NAME; GEOGRAPHIC stores CITY_NAME (primary key), COUNTY, and REGION. The CITY_NAME columns in RESTAURANT and LOCATION link to GEOGRAPHIC.CITY_NAME, allowing multiple restaurants per city, while each restaurant can have at most one LOCATION record.
+If the location or name of the input CSV file is not predetermined, specify it here:
+restaurants_dataset.csv
+
+**Output requirements**
+- Produce exactly one CSV file named **restaurants_dataset_predictions.csv**.
+- Include one row per input task, matching the original question text verbatim.
+- Each **predicted_sql** entry must be a valid SQLite query that can be run without modification.
+- Use UTF‑8 encoding and standard CSV quoting rules.
+
+**Quality criteria**
+1. All generated SQL statements are syntactically correct for SQLite.
+2. The CSV file conforms to proper quoting/escaping so it can be imported without errors.
+3. The order of rows and any duplicate questions are identical to the input.
+
+**Boundary**
+Do not add explanatory text, comments, or Markdown; limit output strictly to the described CSV content.
+Write this for me. Match the depth, vocabulary and examples to that reader.
+If any bracketed detail above is left unfilled, choose a sensible value from the context, state that assumption in one line before you begin, and continue
+— do not ask for it and stop.
+
+Unless a length is specified above, aim for roughly 600-900 words.
+'''
+99.35% accuracy
+
+=======================================================================================================================
+
+
+
+
+new chat with ChatGPT, RACE generated prompt:
+'''
+You are a skilled data engineer tasked with translating natural‑language analysis requests into executable SQLite statements.
+For each analysis request supplied, write a single SQLite query that fulfills the request. Preserve the exact wording of each request, keep the original order (including any duplicate entries), and place the query in a CSV‑compatible format.
+The input you will receive consists of:
+- A list of analysis questions (the tasks to be answered)
+— "restaurants_dataset.csv"
+
+- The relational schema of the restaurant dataset
+— The database contains three tables: RESTAURANT stores ID (primary key), NAME, FOOD_TYPE, CITY_NAME, and RATING; LOCATION stores RESTAURANT_ID (primary key referencing RESTAURANT.ID), HOUSE_NUMBER, STREET_NAME, and CITY_NAME; GEOGRAPHIC stores CITY_NAME (primary key), COUNTY, and REGION. The CITY_NAME columns in RESTAURANT and LOCATION link to GEOGRAPHIC.CITY_NAME, allowing multiple restaurants per city, while each restaurant can have at most one LOCATION record.
+
+Assume the dataset is stored in a SQLite database and that all necessary tables are available as described.
+Produce one UTF‑8 CSV file named **restaurants_dataset_predictions.csv** with exactly two columns: `question` and `predicted_sql`. Each row must contain the original question text and the corresponding SQLite query, properly quoted and escaped for CSV. Do not include any additional columns, explanations, or Markdown formatting.
+Quality criteria:
+
+1. Every query must be syntactically valid SQLite and runnable without modification.
+2. Queries must directly answer the associated question without extraneous logic.
+3. CSV output must conform to standard quoting rules so that commas inside the query do not break the file.
+
+If any required detail (e.g., specific column names or table relationships) is unclear, state your assumption and ask up to three concise clarifying questions before generating the output.
+Write this for me. Match the depth, vocabulary and examples to that reader.
+Unless a length is specified above, aim for roughly 600-900 words.
+'''
+99.35% accuracy
+=======================================================================================================================

@@ -86,11 +86,12 @@ only a conservative size guard, not a model tokenizer or a promise that every
 larger corpus fits the model context. Raising `--batch-chars` cannot remove the
 full-corpus context limit at refinement/review.
 
-Small models, JSON mode plus basic Pydantic validation, batched extraction and a
+Small models, strict JSON Schema plus Pydantic validation, batched extraction and a
 single revision prioritize execution time over polished extraction. Full source
 context costs input tokens but allows meaningful coverage review. Output caps may
-cause a dense corpus to fail rather than silently lose requirements. No latency,
-cost, or semantic-quality claims have been measured in a live model run.
+cause a dense corpus to fail rather than silently lose requirements. Live latency
+and monetary cost were not benchmarked; the observed output-quality limitations
+are documented below.
 
 ## Setup and run
 
@@ -106,7 +107,9 @@ printf '\n'
 python requirements_network.py data/corpus --output requirements.md
 ```
 
-The key is read only from the environment and is never logged. For a different
+The key is read from the environment, optionally loaded from a `.env` file beside
+the script, and is never logged. Existing environment values take precedence.
+A `.env` file can contain `OPENAI_API_KEY=your_key`; it is ignored by Git. For a different
 corpus, replace `data/corpus` with the input directory. Supported formats are
 plain UTF-8 text/Markdown and text-format email; binary/PDF/Word and encoded MIME
 attachments are not decoded by this minimal loader. Other files are reported.
@@ -127,7 +130,7 @@ as a fresh result.
 Installed environment: OpenAI 3.36.1, LangGraph 1.2.16, Pydantic 2.14.0.
 Inspection succeeded: 20 documents, 145,535 characters, no skipped/unreadable files.
 
-**All 12 structural tests passed** (`Ran 12 tests in 10.014s`, `OK`).
+**All 15 structural tests passed** (`OK`); API responses are mocked.
 
 The unittest suite uses explicitly synthetic API fixtures and the real LangGraph
 runtime and corpus. It checks both routing paths, final rejection termination,
@@ -136,9 +139,89 @@ batching, lineage/source validation, JSON/length failures, API failure handling,
 missing credentials, prompt coverage and document/audit writing. Fixture outputs
 are temporary and are deleted; they are not corpus-generated deliverables.
 
-The live command was attempted and exited **1** with:
-`ERROR: Missing OPENAI_API_KEY. Set it in your environment and rerun.`
-Consequently **no live model was invoked and no genuine `requirements.md` or
-`.audit.json` was generated**. The required corpus-generated document remains
-blocked on credentials. Run the setup/run command above to create it; model
-availability, live execution latency and semantic quality remain unverified.
+### Live execution
+
+The live run completed on the supplied corpus and generated `requirements.md`
+and `requirements.audit.json`. The execution log and supplied audit record
+confirm **five model calls**, **one feedback revision** (two refinement passes),
+and **eight final requirements**:
+
+| Call | Node | Model |
+|---|---|---|
+| 1 | Extractor | `gpt-4.1-nano` |
+| 2 | Refiner | `gpt-4o-mini` |
+| 3 | Reviewer | `gpt-5-nano` |
+| 4 | Refiner, revision | `gpt-4o-mini` |
+| 5 | Reviewer, final review | `gpt-5-nano` |
+
+The recorded node trace was:
+
+`loader -> extractor -> refiner -> reviewer -> refiner -> reviewer -> writer`
+
+All five API responses reported `finish_reason: stop`. All 20 input documents
+were loaded, with no skipped or unreadable files reported. The observed run
+therefore confirms execution of all three distinct model roles, state transfer
+sufficient to complete the workflow, the feedback route, bounded termination,
+and final document writing. These are structural execution results, not evidence
+of complete or semantically correct requirements extraction.
+
+### Output quality and remaining limitations
+
+The final reviewer marked **OS1–OS9 as passing**, but also returned an unresolved
+issue describing possible omissions and conflict-resolution gaps. Independent
+inspection of the generated document against the corpus confirmed substantial
+omissions, so the review's OS8 pass should not be treated as a reliable assessment
+of completeness.
+
+The eight final requirements cite only **9 of the 20 loaded documents**. Citation
+counts alone do not prove completeness or incompleteness, but concrete missing
+content includes:
+
+- Optional streamlined staff login, password fallback and role-based access
+  control from `email_staff_login.eml`.
+- Financial reporting, payment-to-charge reconciliation and retention policies
+  from `email_financial_reports.eml`.
+- Linux/Solaris compatibility, accessibility and reporting without disrupting
+  the OPAC from `interview_sysadmin_2009-05-10.txt`.
+- Configuration migration, documentation, error reporting and Excel/HTML/CSV
+  output from `meeting_tech_subcommittee_2009-06-30.txt`.
+- Configurable inactivity thresholds and electronic-activity criteria from
+  `conversations/conv_pines024_inactive_patrons.eml`, despite that source being
+  cited by REQ-008.
+
+Final lineage contains only candidate IDs `C-0001` through `C-0008`. The audit
+does not retain the original extraction output, so the extraction stage cannot
+be independently reconstructed from the saved audit. The extractor produced
+only 758 completion tokens and stopped normally; increasing the output-token
+limit alone would not address the observed under-extraction.
+
+The blacklist is empty. This is permissible if no requirements were discarded
+as conflicting or nonsensical; an empty blacklist is not, by itself, a failure.
+
+All architectural stages executed, and all output specifications are explicitly
+addressed in the prompts. However, the resulting document is substantially
+incomplete and the automated review overestimated its coverage. Smaller
+extraction batches, retaining extracted candidates in the audit, and requiring
+concrete source-backed review findings are possible improvements; they were not
+part of this observed run. No live latency or monetary-cost benchmark was
+recorded.
+
+## Source-ID correction
+
+The initial version requested JSON mode, then rejected any source string that
+differed from a loaded document ID. After a reported live extraction failure,
+`response_schema` now restricts source IDs to actual input IDs using strict
+Structured Outputs (`json_schema`, `strict: true`, enum values). Review check
+keys are also fixed to OS1–OS9 in that schema. This adds no extra API calls.
+
+`canonical_source` additionally accepts formatting differences such as Windows
+path separators, `./`, a `data/corpus/` prefix, and uniquely identifiable bare
+filenames, restoring the exact canonical source ID. It never fuzzy-matches a
+filename or chooses between ambiguous matches. Unknown references still stop
+execution, now naming the offending value and allowed IDs. Source support
+remains a semantic review question. Regression tests cover aliases, ambiguity,
+unknown IDs, schema source enums and strict object definitions. The subsequent
+live run completed; its execution evidence and output limitations are recorded
+above.
+
+Structured Outputs reference: https://developers.openai.com/api/docs/guides/structured-outputs
